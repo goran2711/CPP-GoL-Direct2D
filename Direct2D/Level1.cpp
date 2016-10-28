@@ -6,6 +6,8 @@ Level1::Level1():
 	GRID_SIZE(10),
 	FUNCTION_CALL_GAP(0.1)
 {
+	std::random_device d;
+	generator = new std::default_random_engine(d());
 }
 
 
@@ -15,7 +17,8 @@ Level1::~Level1()
 
 void Level1::load()
 {
-	srand(time(NULL));	// Seed PRNG
+	// 15 % chance of node being alive at load
+	std::bernoulli_distribution distribution(0.15);
 
 	auto renderTarget = graphics->getRenderTarget();
 	auto screenSize = renderTarget->GetSize();
@@ -34,7 +37,7 @@ void Level1::load()
 	{
 		for (int j = 0; j < nodesPerColumn; ++j)
 		{
-			nodes[i][j] = new Node(D2D1::Point2F(i, j), rand() % 100 < 10);
+			nodes[i][j] = Node(D2D1::Point2F(i, j), distribution(*generator));
 		}
 	}
 
@@ -43,13 +46,13 @@ void Level1::load()
 
 void Level1::unload()
 {
-	for (int i = 0; i < nodes.size(); ++i)
+	/*for (int i = 0; i < nodes.size(); ++i)
 	{
 		for (int j = 0; i < nodes[i].size(); ++j)
 		{
 			delete nodes[i][j];
 		}
-	}
+	}*/
 }
 
 void Level1::update(double totalTime, double deltaTime)
@@ -69,19 +72,19 @@ void Level1::update(double totalTime, double deltaTime)
 		for (int column = 0; column < totalColumns; ++column)
 		{
 			livingNeighbours = 0;
-			currentNode = nodes[row][column];
+			currentNode = &nodes[row][column];
 
 			// Check LEFT and RIGHT nodes
 			if (column - 1 >= 0)					// LEFT nodes
 			{
-				if (nodesSnapshot[row][column - 1]->alive)
+				if (nodesSnapshot[row][column - 1].alive)
 				{
 					++livingNeighbours;
 				}
 			}
 			if (column + 1 < totalColumns)			// RIGHT nodes
 			{
-				if (nodesSnapshot[row][column + 1]->alive)
+				if (nodesSnapshot[row][column + 1].alive)
 				{
 					++livingNeighbours;
 				}
@@ -93,7 +96,7 @@ void Level1::update(double totalTime, double deltaTime)
 				for (int i = -1; i <= 1; ++i)		// Check all three ABOVE nodes
 				{
 					if (column + i < 0 || column + i > totalColumns - 1) continue;	// Skip if out of bounds
-					if (nodesSnapshot[row - 1][column + i]->alive)
+					if (nodesSnapshot[row - 1][column + i].alive)
 					{
 						++livingNeighbours;
 					}
@@ -104,7 +107,7 @@ void Level1::update(double totalTime, double deltaTime)
 				for (int i = -1; i <= 1; ++i)		// Check all three BELOW nodes
 				{
 					if (column + i < 0 || column + i > totalColumns - 1) continue;	// Ditto
-					if (nodesSnapshot[row + 1][column + i]->alive)
+					if (nodesSnapshot[row + 1][column + i].alive)
 					{
 						++livingNeighbours;
 					}
@@ -140,7 +143,7 @@ void Level1::render()
 	{
 		for (const auto& nodeRow : nodeColumn)
 		{
-			graphics->fillSquare(nodeRow->pos.x, nodeRow->pos.y, GRID_SIZE, nodeRow->colour);
+			graphics->fillSquare(nodeRow.pos.x, nodeRow.pos.y, GRID_SIZE, nodeRow.colour);
 		}
 	}
 

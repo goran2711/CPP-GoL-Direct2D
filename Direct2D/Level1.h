@@ -1,6 +1,6 @@
 #pragma once
 #include <vector>
-#include <time.h>	// time()
+#include <random>
 #include "GameLevel.h"
 
 struct Node {
@@ -45,7 +45,8 @@ struct Node {
 
 class Level1 : public GameLevel
 {
-	std::vector< std::vector<Node*> > nodes;
+	std::default_random_engine* generator;
+	std::vector< std::vector<Node> > nodes;
 	const int GRID_SIZE;
 
 	double nextFunctionCall;
